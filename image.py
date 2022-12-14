@@ -265,7 +265,7 @@ def convert_to_grayscale(directory):
 
         # Applying grayscale method
         gray_image = ImageOps.grayscale(og_image)
-        
+
         # Save image to seperate directory
         gray_image.save('./grey_images/' + image)
 
