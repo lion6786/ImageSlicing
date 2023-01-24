@@ -15,6 +15,7 @@ from sklearn.preprocessing import LabelEncoder
 # Near the end, there is sample code for how to label the patches, we can implement after finishing up the slicing
 # Use multithreading/multiprocessing to work on different data sets at once
 
+
 """
 We can define a function to calculate how many slices we would need for a given image depending on its dimensions,
 and return the coordinates for each slice as a bounding box in xyxy format
@@ -175,8 +176,7 @@ def show_image(image, bboxes=None, class_labels=None, draw_bboxes_fn=draw_bboxes
 def create_training_data(train_slices, img) -> np.array:
     train_slice_index = 0
     train_data = []
-    with open("train_data.txt", 'w'):
-        pass
+
     for f in train_slices:
         xmin, ymin, xmax, ymax = train_slices[train_slice_index]
         # show_image(img[ymin:ymax, xmin:xmax])
@@ -245,7 +245,7 @@ def create_test_data(test_slices, img) -> np.array:
 
 def one_hot():
     images = []
-    for files in os.listdir("./converted_images"):
+    for files in os.listdir("./grey_images"):
         images.append(files)
 
     label = LabelEncoder()
@@ -254,7 +254,7 @@ def one_hot():
 
     onehot_data = OneHotEncoder(sparse_output=False)
     onehot_data = onehot_data.fit_transform(int_data)
-    print(onehot_data)
+    return onehot_data
     #print(images)
 
 
@@ -280,61 +280,72 @@ test_directory = "/home/owen/PycharmProjects/labProject/test_set"
 
 """ load the data (numpy array) -- starting with one image """
 # load the image and convert into numpy array
-gimg = Image.open('./converted_images/merry_flor0019.jpg').convert('L')
-gimg.save('./converted_images_grey/greyscale.jpg')
-img = plt.imread('./converted_images_grey/greyscale.jpg')
+#gimg = Image.open('./converted_images/merry_flor0019.jpg').convert('L')
+#gimg.save('./converted_images_grey/greyscale.jpg')
+#img = plt.imread('./converted_images_grey/greyscale.jpg')
 #print(img.shape)
 # img = plt.imread('./converted_images/merry_flor0019.jpg')
 # type(img)
 # print(img.shape)
 direc = "./tiff_images"
 convert_to_grayscale(direc)
-# to see array data
+
+with open("train_data.txt", 'w'):
+    pass
+
+nparray = []
 with open("imagearray.txt", 'w') as array:
     pass
-    for data in img:
-        array.write(
-            f"{data}"
-        )
-# print(np.array(img))
-
-""" apply sliding window algorithm """
-# set parameters
-image_height = img.shape[0]
-image_width = img.shape[1]
-slice_height: int = 64
-slice_width: int = 64
-overlap_height_ratio: float = 0  # currently set overlap to none for simplicity
-overlap_width_ratio: float = 0
-
-train_slices = calculate_train_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
-                                     overlap_width_ratio)
-
-valid_slices = calculate_valid_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
-                                     overlap_width_ratio)
-
-test_slices = calculate_test_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
-                                   overlap_width_ratio)
-
-#create_training_data(train_slices, img)
-# for slice_idx, slice_bbox in enumerate(train_slices):
-#    show_image(img, [slice_bbox], [''])
-
-#for slice_idx, slice_bbox in enumerate(valid_slices):
-#    show_image(img, [slice_bbox], [''])
-
-#for slice_idx, slice_bbox in enumerate(test_slices):
-#    show_image(img, [slice_bbox], [''])
-
-show_image(img)
+for image in os.listdir('./grey_images'):
+    img = (plt.imread('./grey_images/' + image))
+    nparray.append(img)
+    with open("imagearray.txt", 'a') as array:
+        for data in img:
+            array.write(
+                f"{data}"
+            )
+        array.write("\n\n")
 
 image_data_train = []
-image_data_train.append(create_training_data(train_slices, img))
+
+for i in range(len(nparray)):
+    img = nparray[i]
+
+    # set parameters
+    image_height = img.shape[0]
+    image_width = img.shape[1]
+    slice_height: int = 64
+    slice_width: int = 64
+    overlap_height_ratio: float = 0  # currently set overlap to none for simplicity
+    overlap_width_ratio: float = 0
+
+    """ apply sliding window algorithm """
+
+    train_slices = calculate_train_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
+                                         overlap_width_ratio)
+
+    valid_slices = calculate_valid_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
+                                         overlap_width_ratio)
+
+    test_slices = calculate_test_slice(image_height, image_width, slice_height, slice_width, overlap_height_ratio,
+                                       overlap_width_ratio)
+
+    show_image(img)
+
+
+    image_data_train.append(create_training_data(train_slices, img))
+
+
+
+
+
 one_hot_images = []
 one_hot_images.append(one_hot())
+print(one_hot_images)
 
-combined_data = zip(one_hot_images, image_data_train)
-print(tuple(combined_data))
+combined_data = tuple(zip(one_hot_images, image_data_train))
+
+print(combined_data)
 
 
 
